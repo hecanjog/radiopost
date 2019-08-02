@@ -6,28 +6,7 @@ import sqlite3
 import time
 
 from pippi import dsp, fx, shapes
-from . import TLEN
-
-SR = 44100
-DEFAULT_SEED = 12345
-
-def getsnd(seg):
-    return dsp.read(seg['source'], start=seg['start']/SR, length=seg['length']/SR)
-
-def stretch(snd, length):
-    overlap = dsp.rand(dsp.MS*10, dsp.MS*50)
-    overlap = min(overlap, snd.dur * 0.25)
-
-    out = dsp.buffer(length=length)
-
-    pos = 0
-    while pos < length:
-        seglen = dsp.rand(snd.dur/2, snd.dur)
-        seg = snd.rcut(seglen).taper(overlap)
-        out.dub(seg, pos)
-        pos += seglen - overlap
-
-    return out
+from . import TLEN, SR, DEFAULT_SEED, DB, getsnd, stretch
 
 def makewaves(seed=12345):
     dsp.seed(seed)
@@ -217,26 +196,24 @@ def mixwaves(seed=12345):
 def countwaves(seed=12345):
     """ Filter and stack a number of waves, staggered over time
     """
-    db = sqlite3.connect('%s-info.db' % seed)
-    db.row_factory = sqlite3.Row
-    c = db.cursor()
-
-    q = 'SELECT * FROM segments WHERE flatness < 0.01'
-    c.execute(q)
-
-    segments = c.fetchall()
-
-    print('Num segments:', len(segments))
+    db = DB(seed)
+    n = db.noisy(2)
+    p = db.pitchy(2)
+    print(n, p)
 
 def combinewaves(seed=12345):
     bits = dsp.read('%s-particles.wav' % seed)
     tone = dsp.read('%s-mixedwaves.wav' % seed)
     bass = dsp.read('%s-basswaves.wav' % seed)
 
+    bass = bass * shapes.win(dsp.win('hann').skewed(0.1), length=dsp.rand(1, 3))
+
     swell = tone.cut(0, bits.dur).env(bits.toenv())
+    tone = tone * shapes.win(dsp.win('hann').skewed(0.1), length=dsp.rand(0.5, 3))
     out = dsp.mix([swell, bits])
-    out.dub(tone.env('saw'))
-    out.dub(bass.env('hannin')*2)
+    out.dub(tone)
+    out.dub(bass)
+    out *= 3
     out = fx.compressor(out, -10, 10)
     out = fx.norm(out, 1)
     out.write('%s-mixture-and-bass.wav' % seed)

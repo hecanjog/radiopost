@@ -1,11 +1,9 @@
-import contextlib
 from collections import defaultdict
 import json
 import os
 from pathlib import Path
 import random
 import sys
-import sqlite3
 
 import aubio
 import librosa
@@ -13,13 +11,7 @@ import numpy as np
 from mutagen.flac import FLAC
 from pippi import dsp, fx
 
-from . import waves
-from . import synth
-from . import TLEN
-
-WINSIZE = 4096
-HOPSIZE = WINSIZE//2
-SR = 44100
+from . import waves, synth, TLEN, DB, WINSIZE, HOPSIZE, SR
 
 
 class Segment:
@@ -107,13 +99,7 @@ def divide(recs, seed=12345):
 
             read_pos += HOPSIZE
 
-    dbpath = '%s-info.db' % seed
-
-    with contextlib.suppress(FileNotFoundError):
-        os.remove(dbpath)
-
-    db = sqlite3.connect(dbpath)
-    c = db.cursor()
+    db = DB(seed, reset=True)
 
     fields = []
     for k,v in Segment.__dict__.items():
@@ -122,17 +108,15 @@ def divide(recs, seed=12345):
 
     qt = "CREATE TABLE segments (source text, %s)" % ', '.join([ '%s numeric' % f for f in fields])
     qv = "INSERT INTO segments VALUES (:source, %s)" % ', '.join([ ':%s' % f for f in fields])
-    c.execute(qt)
+
+    db.a(qt)
 
     rows = []
     for seg in segments:
         vals = defaultdict(lambda: None, seg.__dict__)
         rows += [ vals ]
 
-    c.executemany(qv, rows)
-
-    db.commit()
-    db.close()
+    db.m(qv, rows)
 
     return segments
 
@@ -173,24 +157,13 @@ if __name__ == '__main__':
     try:
         flacs = sys.argv[1]
         seed = int(sys.argv[2])
-
-        #choices = choose(flacs, seed)
-        choices = [ str(p) for p in Path(sys.argv[1]).glob('*.flac') ]
-        print('Choices:', choices)
-
-        segments = divide(choices, seed)
     except IndexError:
         print('Usage: python -m radiopost.segments <path-to-flacs> <seed>')
 
-    print('makeparticles')
-    synth.makeparticles(seed)
-    print('makewaves')
-    waves.makewaves(seed)
-    print('mixwaves')
-    waves.mixwaves(seed)
-    print('basswaves')
-    waves.basswaves(seed)
-    print('combine')
-    waves.combinewaves(seed)
-    print('DONE!')
+
+    #choices = choose(flacs, seed)
+    choices = [ str(p) for p in Path(sys.argv[1]).glob('*.flac') ]
+    print('Choices:', choices)
+
+    divide(choices, seed)
 
