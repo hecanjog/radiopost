@@ -7,6 +7,7 @@ import time
 
 from pippi import dsp, fx, shapes
 from . import TLEN, SR, DEFAULT_SEED, DB, getsnd, stretch
+from . import recipes as RS
 
 def makewaves(seed=12345):
     dsp.seed(seed)
@@ -48,10 +49,10 @@ def makewaves(seed=12345):
 
     while len(usable_waves) < 50:
         w = dsp.choice(waves)
-        if waves_used[w['source']] > 10:
-            continue
+        #if waves_used[w['source']] > 10:
+        #    continue
 
-        waves_used[w['source']] += 1
+        #waves_used[w['source']] += 1
         usable_waves += [ w ]
 
     with open('%s-waves.log' % seed, 'w') as iw:
@@ -193,27 +194,36 @@ def mixwaves(seed=12345):
 
     out.write('%s-mixedwaves.wav' % seed)
 
-def countwaves(seed=12345):
-    """ Filter and stack a number of waves, staggered over time
-    """
-    db = DB(seed)
-    n = db.noisy(2)
-    p = db.pitchy(2)
-    print(n, p)
-
 def combinewaves(seed=12345):
+    db = DB(seed)
     bits = dsp.read('%s-particles.wav' % seed)
     tone = dsp.read('%s-mixedwaves.wav' % seed)
     bass = dsp.read('%s-basswaves.wav' % seed)
 
-    bass = bass * shapes.win(dsp.win('hann').skewed(0.1), length=dsp.rand(1, 3))
-
     swell = tone.cut(0, bits.dur).env(bits.toenv())
-    tone = tone * shapes.win(dsp.win('hann').skewed(0.1), length=dsp.rand(0.5, 3))
     out = dsp.mix([swell, bits])
-    out.dub(tone)
-    out.dub(bass)
-    out *= 3
+
+    tonefull = tone * shapes.win(dsp.win('hann').skewed(0.1), length=dsp.rand(0.5, 3))
+    out.dub(tonefull)
+
+    bassfull = bass * shapes.win(dsp.win('hann').skewed(0.1), length=dsp.rand(1, 3))
+    out.dub(bassfull)
+
+    inserts = [RS.sparkgauze, RS.stutterinsert] + ([RS.altinsert] * 4)
+    numinserts = dsp.randint(20, 50)
+
+    for _ in range(numinserts):
+        insert = dsp.choice(inserts)(bits, tone, bass, db)
+        pos = dsp.rand(0, out.dur-insert.dur)
+        out.dub(insert, pos)
+
+    replacements = [RS.sparkreplace, RS.stutterreplace, RS.altreplace]
+    numreplacements = dsp.randint(2, 15)
+
+    for _ in range(numreplacements):
+        out = dsp.choice(replacements)(out, bits, tone, bass, db)
+
+    out *= 10
     out = fx.compressor(out, -10, 10)
     out = fx.norm(out, 1)
     out.write('%s-mixture-and-bass.wav' % seed)
@@ -280,6 +290,4 @@ if __name__ == '__main__':
         combinewaves(seed)
     elif sys.argv[1] == 'pulse':
         pulsewaves(seed)
-    elif sys.argv[1] == 'count':
-        countwaves(seed)
 

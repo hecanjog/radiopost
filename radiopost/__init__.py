@@ -43,6 +43,14 @@ class DB:
     def __del__(self):
         self.db.close()
 
+    def longest(self, count=None):
+        sql = 'SELECT * FROM segments ORDER BY length DESC'
+        if count is not None:
+            sql += ' LIMIT ?'
+            return self.q(sql, (count,))
+        else:
+            return self.q(sql)
+
     def noisy(self, count=None):
         sql = 'SELECT * FROM segments WHERE freq = 0 ORDER BY flatness ASC'
         if count is not None:

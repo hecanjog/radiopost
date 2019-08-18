@@ -77,7 +77,7 @@ def makeparticles(seed=12345):
 
     out = dsp.buffer(length=TLEN)
 
-    numphrases = dsp.randint(1, int(max(10, TLEN) * 0.05))
+    numphrases = dsp.randint(1, max(2, int(TLEN * 0.05)))
     maxphrase = TLEN / numphrases
     minphrase = maxphrase / 4
 
@@ -90,7 +90,7 @@ def makeparticles(seed=12345):
 
     phraseidxs = []
     while len(phraseidxs) < numphrases:
-        idx = dsp.randint(0, numphrases)
+        idx = dsp.randint(0, numphrases-1)
         if idx not in phraseidxs:
             phraseidxs += [ idx ]
 
