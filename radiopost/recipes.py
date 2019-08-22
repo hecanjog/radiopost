@@ -27,7 +27,7 @@ def sparkreplace(snd, bits, tone, bass, db):
 
         out.dub(layer)
 
-    if dsp.rand() > 0.7:
+    if dsp.rand() > 0.87:
         out = fx.crossover(out, dsp.rand(10, 50), 'rnd', 'hann')
         out = fx.lpf(out, dsp.rand(3000, 6000))
         
@@ -61,7 +61,7 @@ def sparkgauze(bits, tone, bass, db):
 
         out.dub(layer)
 
-    if dsp.rand() > 0.7:
+    if dsp.rand() > 0.87:
         out = fx.crossover(out, dsp.rand(10, 50), 'rnd', 'hann')
         out = fx.lpf(out, dsp.rand(3000, 6000))
         

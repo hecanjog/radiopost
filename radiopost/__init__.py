@@ -29,8 +29,8 @@ def stretch(snd, length):
     return out
 
 class DB:
-    def __init__(self, seed=DEFAULT_SEED, reset=False):
-        dbpath = '%s-info.db' % seed
+    def __init__(self, name, seed=DEFAULT_SEED, reset=False):
+        dbpath = 'renders/%s/%s-info.db' % (name, seed)
 
         if reset:
             with contextlib.suppress(FileNotFoundError):

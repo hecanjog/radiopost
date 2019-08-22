@@ -59,7 +59,7 @@ def getpitch(snd, tolerance=0.8):
 
     return sum(pitches) / len(pitches)
 
-def divide(recs, seed=12345):
+def divide(recs, name, seed=12345):
     segments = []
 
     for rec in recs:
@@ -99,7 +99,7 @@ def divide(recs, seed=12345):
 
             read_pos += HOPSIZE
 
-    db = DB(seed, reset=True)
+    db = DB(name, seed, reset=True)
 
     fields = []
     for k,v in Segment.__dict__.items():

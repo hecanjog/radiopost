@@ -3,7 +3,7 @@ import sys
 import sqlite3
 
 from pippi import dsp, fx, shapes
-from . import TLEN, SR, DB, getsnd, stretch
+from . import SR, DB, getsnd, stretch
 
 def save_long_sounds():
     out = dsp.buffer()
@@ -60,7 +60,7 @@ def makecurve(segment):
     snd = getsnd(segment)
     return snd.toenv()
 
-def makeparticles(seed=12345):
+def makeparticles(TLEN, name, seed=12345):
     dsp.seed(seed)
 
     #length = TLEN * 0.6
@@ -77,7 +77,7 @@ def makeparticles(seed=12345):
 
     out = dsp.buffer(length=TLEN)
 
-    numphrases = dsp.randint(1, max(2, int(TLEN * 0.05)))
+    numphrases = dsp.randint(1, max(2, int(TLEN * 0.01)))
     maxphrase = TLEN / numphrases
     minphrase = maxphrase / 4
 
@@ -97,12 +97,12 @@ def makeparticles(seed=12345):
     pos = 0
     unusedsilence = lensilences
 
-    print('PHRASES', lenphrases, 'SILENCES', lensilences)
+    print('PHRASES', numphrases, lenphrases, 'SILENCES', lensilences)
 
     params = []
     for li in phraseidxs:
         length = phrases[li]
-        params += [ (seed, li, length, pos) ]
+        params += [ (name, seed, li, length, pos) ]
 
         if unusedsilence > 0:
             s = dsp.rand(0, min(unusedsilence, maxphrase))
@@ -120,42 +120,48 @@ def makeparticles(seed=12345):
     out = fx.compressor(out, -5, 5)
     out = fx.norm(out, 1)
 
-    out.write('%s-particles.wav' % seed)
+    out.write('renders/%s/stems/%s-particles.wav' % (name, seed))
 
 
-def makephrase(seed, li, length, dpos):
-    db = DB(seed)
+def makephrase(name, seed, li, length, dpos):
+    db = DB(name, seed)
     segments = db.noisy()
 
     dsp.seed(seed+li)
 
-    print('MAKEPHRASE', length, seed, li, dpos)
+    #print('MAKEPHRASE', length, seed, li, dpos)
     out = dsp.buffer(length=length)
 
     rcurvemod = shapes.win('sine', length=length, stability=shapes.win('sine'))
     lcurvemod = shapes.win('sine', length=length, stability=shapes.win('sine'))
     acurvemod = shapes.win('sine', length=length, stability=shapes.win('sine'))
-    fwcurvemod = shapes.win('sine', length=length, stability=shapes.win('sine'))
-    fmcurvemod = shapes.win('sine', length=length, stability=shapes.win('sine'))
+    fwcurvemod = shapes.win('sine', length=0.5, stability=shapes.win('sine'))
+    fmcurvemod = shapes.win('sine', length=1, stability=shapes.win('sine'))
 
-    for _ in range(3):
+    print('NUM SEGMENTS', len(segments))
+
+    for _ in range(dsp.randint(1, dsp.randint(2, 10))):
+        print('SEGMENT LAYER', _)
         layer = dsp.buffer(length=length)
         pan = shapes.win('sine', length=0.2)
 
         #rhythmcurve = makecurve(dsp.choice(segments)).skewed(0.9)
         stablecurve = shapes.win('sine')
         rhythmcurve = shapes.win('sine', length=20, stability=stablecurve) * rcurvemod
-        rhythmcurve.graph('%s-rhythmcurve.png' % seed)
+        rhythmcurve.graph('renders/%s/graphs/%s-rhythmcurve.png' % (name, seed))
 
         lengthcurve = shapes.win('sine', length=10) * lcurvemod
-        lengthcurve.graph('%s-lengthcurve.png' % seed)
+        lengthcurve.graph('renders/%s/graphs/%s-lengthcurve.png' % (name, seed))
         lengthcurve = dsp.win(lengthcurve, dsp.MS*1, dsp.rand(0.02, length/2))
 
         elapsed = 0
         pos = 0
 
-        maxlength = dsp.rand(dsp.MS*10, length/dsp.randint(2, 10))
+        #maxlength = dsp.rand(10, length)
+        maxlength = dsp.rand(1, length)
         minlength = dsp.MS*0.1
+
+        print('MAXLENGTH', maxlength, 'MINLENGTH', minlength)
 
         onsets = []
         while elapsed < length:
@@ -164,22 +170,28 @@ def makephrase(seed, li, length, dpos):
             onsets += [ o + elapsed ]
             elapsed += o
 
-        acurve = shapes.win('hann', length=10) * acurvemod
-        acurve.graph('%s-ampcurve.png' % seed)
+        print('NUM ONSETS', len(onsets))
 
-        fwidth = shapes.win('hann', length=4, stability=shapes.win('sine')) * fwcurvemod
-        fwidth.graph('%s-freqwidth.png' % seed)
+        acurve = shapes.win('hann', length=10) * acurvemod
+        acurve.graph('renders/%s/graphs/%s-ampcurve.png' % (name, seed))
+
+        flens = length/120
+        flens = 0.5
+
+        fwidth = shapes.win('hann', length=flens, stability=shapes.win('sine')) * fwcurvemod
+        fwidth.graph('renders/%s/graphs/%s-freqwidth.png' % (name, seed))
         fwidth = dsp.win(fwidth, 0.001, 0.5)
 
-        fmin = shapes.win('hann', length=4, stability=shapes.win('sine')) * fmcurvemod
-        fmin.graph('%s-freqmin.png' % seed)
+        fmin = shapes.win('hann', length=flens, stability=shapes.win('sine')) * fmcurvemod
+        fmin.graph('renders/%s/graphs/%s-freqmin.png' % (name, seed))
         fmin = dsp.win(fmin, 0.5, 1)
 
         p = None
         for i, onset in enumerate(onsets):
             pos = i / len(onsets)
 
-            if p is None or dsp.rand() > 0.96:
+            #if p is None or dsp.rand() > 0.96:
+            if p is None or dsp.rand() > 0.1:
                 segment = segments[int(acurve.interp(pos) * (len(segments)-1))]
                 p = getsnd(segment)
 
@@ -201,10 +213,10 @@ def makephrase(seed, li, length, dpos):
 
             layer.dub(p, onset)
 
-        f = dsp.win(shapes.win('hann', length=dsp.rand(10, 30)), 200, 20000)
+        f = dsp.win(shapes.win('hann', length=0.5) * shapes.win('hann'), 200, 20000)
         layer = fx.lpf(layer, f)
 
-        f = dsp.win(shapes.win('hann', length=dsp.rand(10, 30)), 2, 10000)
+        f = dsp.win(shapes.win('hann') * shapes.win('hann'), 2, 10000)
         layer = fx.hpf(layer, f)
 
         out.dub(layer)
