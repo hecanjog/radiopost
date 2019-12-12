@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from pippi import dsp
 import sys
+import time
 
 if __name__ == '__main__':
     from . import synth, segments, waves
@@ -23,20 +24,22 @@ if __name__ == '__main__':
     (Path('renders') / Path(name) / Path('graphs')).mkdir(exist_ok=True)
 
     if seed is None:
-        seed = sum([ ord(s) for s in str(name) ])
+        seed = int(time.time())
+    dsp.seed(int(seed))
 
-    print('SEED', seed)
+    options = [ str(p) for p in Path(sys.argv[1]).glob('*.flac') ]
+    options += [ str(p) for p in Path(sys.argv[1]).glob('*.wav') ]
 
-    choices = [ str(p) for p in Path(sys.argv[1]).glob('*.flac') ]
-    print('Choices:', choices)
-
+    choices = []
+    MLEN = dsp.rand(60 * 3, 60 * 20)
     TLEN = 0
-    for c in choices:
-        TLEN += dsp.read(c).dur
+    while TLEN < MLEN:
+        o = options.pop(dsp.randint(0, len(options)))
+        TLEN += dsp.read(o).dur
+        choices += [ o ]
 
-    TLEN = 60 * 3
-
-    print('TLEN', TLEN)
+    print('TLEN', TLEN, 'MLEN', MLEN)
+    print('Choices:', choices)
 
     print('divide')
     segments.divide(choices, name, seed)
