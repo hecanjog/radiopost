@@ -76,8 +76,10 @@ if __name__ == '__main__':
     flac = FLAC(dest)
 
     credits = []
-    for o in options:
-        credits += [FLAC(o)['title']]
+    for c in choices:
+        credits += [FLAC(c)['title']]
+
+    print(credits)
 
     flac['title'] = ', '.join(credits)
     flac['catalognumber'] = catalognumber
