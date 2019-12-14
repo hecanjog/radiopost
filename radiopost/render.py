@@ -83,8 +83,6 @@ if __name__ == '__main__':
     flac['catalognumber'] = catalognumber
     flac.save()
 
-    Path('renders/%s' % name).unlink()
-
     cover = Path('/srv/www/phonography.radio.af/covers/default.jpg')
     dcover = Path('/srv/www/phonography.radio.af/covers/%s.jpg' % catalognumber)
 
