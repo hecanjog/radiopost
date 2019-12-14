@@ -40,7 +40,7 @@ if __name__ == '__main__':
     MLEN = dsp.rand(60 * 3, 60 * 20)
     TLEN = 0
     while TLEN < MLEN:
-        o = options.pop(dsp.randint(0, len(options)))
+        o = options.pop(dsp.randint(0, len(options)-1))
         TLEN += dsp.read(o).dur
         choices += [ o ]
 
