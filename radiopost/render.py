@@ -44,6 +44,8 @@ if __name__ == '__main__':
         TLEN += dsp.read(o).dur
         choices += [ o ]
 
+    TLEN *= dsp.rand(0.2, 1)
+
     print('TLEN', TLEN, 'MLEN', MLEN)
     print('Choices:', choices)
 
