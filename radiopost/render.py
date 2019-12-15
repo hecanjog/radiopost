@@ -58,7 +58,7 @@ if __name__ == '__main__':
     catalognumber = 'phafg-%s' % hashit(final)
     dest = Path('/srv/radio/phonography/generated/hcj01/%s.flac' % catalognumber)
 
-    r = subprocess.run(['sox', '-S', final, dest])
+    r = subprocess.run(['sox', final, dest])
     if r.returncode != 0:
         raise Exception('Could not convert to flac: %s' % dest)
 
@@ -85,10 +85,11 @@ if __name__ == '__main__':
 
     print('New phonography.radio.af procedural render')
     print('TLEN', TLEN, 'MLEN', MLEN)
+    print('Length:', TLEN//60 + (TLEN*60 - TLEN))
     print('Credits:', flac['title'])
     print('Catalog Number:', flac['catalognumber'])
     print('Cover:', dcover)
     print('FLAC:', dest)
     print('Rendered in %s minutes %s seconds' % (renderminutes, renderseconds))
-    flac.info.pprint()
+    print(flac.info)
 
