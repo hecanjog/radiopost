@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
     rendertime = renderend - renderstart
     renderminutes = rendertime // 60
-    renderseconds = rendertime - (minutes * 60)
+    renderseconds = rendertime - (renderminutes * 60)
 
     print('New phonography.radio.af procedural render')
     print('TLEN', TLEN, 'MLEN', MLEN)
