@@ -48,25 +48,16 @@ def makewaves(name, seed=12345):
     usable_waves = []
 
     while len(usable_waves) < 50:
-        w = dsp.choice(waves)
-        #if waves_used[w['source']] > 10:
-        #    continue
-
-        #waves_used[w['source']] += 1
-        usable_waves += [ w ]
+        usable_waves += [ dsp.choice(waves) ]
 
     with open('renders/%s/%s-waves.log' % (name, seed), 'w') as iw:
         count = 0
         for w in usable_waves:
-            started = time.time()
-            #length = dsp.rand(10, 30)
-
             snd = getsnd(w).speed(w['speed'])
             snd = fx.hpf(snd, 60)
 
             length = dsp.rand(snd.dur, snd.dur * 10)
 
-            #snd = snd.stretch(length)
             snd = stretch(snd, length)
 
             snd = fx.norm(snd, 1)
@@ -86,14 +77,10 @@ def makewaves(name, seed=12345):
             filename = 'renders/%s/waves/waves-%s-%s.wav' % (name, seed, count)
             info = '%s, %s, %s, %s, %s, %s' % (filename, length, w['freq'], w['speed'], w['source'], r['source'])
 
-            print('Convolving...', info)
-
             snd = snd.convolve(rock)
 
             snd.write(filename)
             iw.write(info+'\n')
-
-            print('Finished in %s seconds' % (time.time()-started))
 
             count += 1
 
@@ -145,7 +132,7 @@ def basswaves(name, seed=12345):
 
             out.dub(chunk.speed(octave).pan(pan.interp(pos/length)), pos)
             #pos += dsp.rand(chunk.dur/4, chunk.dur)
-            print('bass', i, 'of', len(octaves), octave, length, pos)
+            #print('bass', i, 'of', len(octaves), octave, length, pos)
             pos += grid.interp(pos/length)
 
     out = fx.norm(out, 1)

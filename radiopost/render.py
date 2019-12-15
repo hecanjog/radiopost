@@ -21,6 +21,7 @@ def hashit(f):
 
 
 if __name__ == '__main__':
+    renderstart = time.time()
     from . import synth, segments, waves
 
     FLACPATH = '/srv/radio/phonography/recordings'
@@ -46,25 +47,11 @@ if __name__ == '__main__':
 
     TLEN *= dsp.rand(0.2, 1)
 
-    print('TLEN', TLEN, 'MLEN', MLEN)
-    print('Choices:', choices)
-
-    print('divide')
     segments.divide(choices, name, seed)
-
-    print('makeparticles')
     synth.makeparticles(TLEN, name, seed)
-
-    print('makewaves')
     waves.makewaves(name, seed)
-
-    print('mixwaves')
     waves.mixwaves(TLEN, name, seed)
-
-    print('basswaves')
     waves.basswaves(name, seed)
-
-    print('combine')
     waves.combinewaves(name, seed)
 
     final = Path('renders/%s/%s-combined.wav' % (name, seed))
@@ -81,9 +68,7 @@ if __name__ == '__main__':
     for c in choices:
         credits += FLAC(c)['title']
 
-    print(credits)
-
-    flac['title'] = ', '.join(credits)
+    flac['title'] = 'Processed from: ' + ', '.join(credits)
     flac['catalognumber'] = catalognumber
     flac.save()
 
@@ -92,5 +77,18 @@ if __name__ == '__main__':
 
     shutil.copy(cover, dcover)
 
-    print('DONE!')
+    renderend = time.time()
+
+    rendertime = renderend - renderstart
+    renderminutes = rendertime // 60
+    renderseconds = rendertime - (minutes * 60)
+
+    print('New phonography.radio.af procedural render')
+    print('TLEN', TLEN, 'MLEN', MLEN)
+    print('Credits:', flac['title'])
+    print('Catalog Number:', flac['catalognumber'])
+    print('Cover:', dcover)
+    print('FLAC:', dest)
+    print('Rendered in %s minutes %s seconds' % (renderminutes, renderseconds))
+    flac.info.pprint()
 

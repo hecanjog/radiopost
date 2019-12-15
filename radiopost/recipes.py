@@ -2,7 +2,6 @@ from pippi import dsp, fx, shapes
 from . import getsnd
 
 def sparkreplace(snd, bits, tone, bass, db):
-    print('SPARK REPLACE')
     length = dsp.rand(10, 30)
     out = dsp.buffer(length=length)    
 
@@ -36,7 +35,6 @@ def sparkreplace(snd, bits, tone, bass, db):
     return dsp.join([snd.cut(0, pos), out, snd.cut(pos+out.dur, snd.dur-(pos+out.dur))])
 
 def sparkgauze(bits, tone, bass, db):
-    print('SPARK')
     length = dsp.rand(10, 30)
     out = dsp.buffer(length=length)    
 
@@ -71,7 +69,6 @@ def sparkgauze(bits, tone, bass, db):
     return out
 
 def alternate(a, b):
-    print('ALTERNATE')
     length = dsp.rand(1, 15)
     out = dsp.buffer(length=length)    
 
@@ -113,7 +110,6 @@ def altinsert(bits, tone, bass, db):
     a = getsnd(dsp.choice(lng))
     b = getsnd(dsp.choice(lng))
     loudest = max(bits.avg, tone.avg, bass.avg) * 4
-    print('altinsert loudest', loudest)
     a = fx.norm(a, loudest)
     b = fx.norm(b, loudest)
     return alternate(a, b)
@@ -124,7 +120,6 @@ def altreplace(snd, bits, tone, bass, db):
     b = getsnd(dsp.choice(lng))
 
     loudest = snd.avg * 4
-    print('altreplace loudest', loudest)
     a = fx.norm(a, loudest)
     b = fx.norm(b, loudest)
 
@@ -143,7 +138,6 @@ def stutterreplace(snd, bits, tone, bass, db):
     return dsp.join([snd.cut(0, pos), s, snd.cut(pos+s.dur, snd.dur-(pos+s.dur))])
 
 def stutter(snd):
-    print('STUTTER')
     length = dsp.rand(1, 15)
     out = dsp.buffer(length=length)    
 

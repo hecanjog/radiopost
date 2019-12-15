@@ -63,7 +63,6 @@ def divide(recs, name, seed=12345):
     segments = []
 
     for rec in recs:
-        print('Segmenting', rec)
         o = aubio.onset('specflux', WINSIZE, HOPSIZE, SR)
 
         snd = dsp.read(rec)
