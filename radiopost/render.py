@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     credits = []
     for c in choices:
-        credits += [FLAC(c)['title']]
+        credits += FLAC(c)['title']
 
     print(credits)
 
