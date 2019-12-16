@@ -43,7 +43,7 @@ if __name__ == '__main__':
     while clen < TLEN:
         c = options.pop(dsp.randint(0, len(options)-1))
         choices += [ c ]
-        clen += FLAC(c)['length']
+        clen += FLAC(c).info.length
 
     segments.divide(choices, name, seed)
     synth.makeparticles(TLEN, name, seed)
