@@ -38,14 +38,7 @@ if __name__ == '__main__':
     options = [ str(p) for p in Path(FLACPATH).glob('*.flac') ]
 
     choices = []
-    MLEN = dsp.rand(60 * 3, 60 * 20)
-    TLEN = 0
-    while TLEN < MLEN:
-        o = options.pop(dsp.randint(0, len(options)-1))
-        TLEN += dsp.read(o).dur
-        choices += [ o ]
-
-    TLEN *= dsp.rand(0.2, 1)
+    TLEN = dsp.rand(60, 60 * 30)
 
     segments.divide(choices, name, seed)
     synth.makeparticles(TLEN, name, seed)
@@ -83,13 +76,15 @@ if __name__ == '__main__':
     renderminutes = rendertime // 60
     renderseconds = rendertime - (renderminutes * 60)
 
+    tminutes = TLEN//60
+    tseconds = TLEN - (tminutes * 60)
+
     print('New phonography.radio.af procedural render')
-    print('TLEN', TLEN, 'MLEN', MLEN)
-    print('Length:', TLEN//60 + (TLEN*60 - TLEN))
-    print('Credits:', flac['title'])
-    print('Catalog Number:', flac['catalognumber'])
+    print(flac.info.pprint())
+    print('Target Length: %s minutes %s seconds (%s total seconds)' % (tminutes, tseconds, TLEN))
+    print('Credits:', flac['title'][0])
+    print('Catalog Number:', flac['catalognumber'][0])
     print('Cover:', dcover)
     print('FLAC:', dest)
     print('Rendered in %s minutes %s seconds' % (renderminutes, renderseconds))
-    print(flac.info)
 
