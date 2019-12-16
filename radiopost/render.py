@@ -39,6 +39,11 @@ if __name__ == '__main__':
 
     choices = []
     TLEN = dsp.rand(60, 60 * 30)
+    clen = 0
+    while clen < TLEN:
+        c = options.pop(dsp.randint(0, len(options)-1))
+        choices += [ c ]
+        clen += FLAC(c)['length']
 
     segments.divide(choices, name, seed)
     synth.makeparticles(TLEN, name, seed)
